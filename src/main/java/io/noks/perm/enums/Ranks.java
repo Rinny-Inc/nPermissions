@@ -6,19 +6,22 @@ import java.util.List;
 import org.bukkit.ChatColor;
 
 public enum Ranks {
-	DEFAULT("default", "&7", Collections.singletonList("kit.*")),
-	MOD("mod", "&9&7[&9Mod&7] &9", Collections.singletonList("*")),
-	ADMIN("admin", "&c&7[&cAdmin&7] &c", Collections.singletonList("*")),
-	MANAGER("manager", "&4&7[&4Manager&7] &4", Collections.singletonList("*")),
-	CREATOR("creator", "&d&7[&dCreator&7] &d", Collections.singletonList("*"));
+	DEFAULT("default", "&7", (byte)0, Collections.singletonList("kit.*")),
+	MEDIA("media", "&d&7[&dMedia&7] &d", (byte)10, Collections.singletonList("kit.*")),
+	MOD("mod", "&9&7[&9Mod&7] &9", (byte)50, Collections.singletonList("*")),
+	ADMIN("admin", "&c&7[&cAdmin&7] &c", (byte)60, Collections.singletonList("*")),
+	MANAGER("manager", "&4&o&7[&4&oManager&7] &4&o", (byte)70, Collections.singletonList("*")),
+	CREATOR("creator", "&d&l&7[&d&lCreator&7] &d&l", (byte)100, Collections.singletonList("*"));
 	
 	public String name;
 	public String prefix;
+	public byte power;
 	public List<String> permissions;
 	
-	Ranks(String name, String prefix, List<String> perm){
+	Ranks(String name, String prefix, byte power, List<String> perm){
 		this.name = name;
 		this.prefix = prefix;
+		this.power = power;
 		this.permissions = perm;
 	}
 	
@@ -32,6 +35,14 @@ public enum Ranks {
 	
 	public List<String> getPermissions() {
 		return this.permissions;
+	}
+	
+	public byte getPower() {
+		return this.power;
+	}
+	
+	public boolean hasHigherPowerThan(Ranks rank) {
+		return this.power > rank.power;
 	}
 	
 	public static Ranks getRankFromName(String name) {

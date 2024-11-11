@@ -2,6 +2,7 @@ package io.noks.perm;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
+import io.noks.perm.commands.RankCommand;
 import io.noks.perm.database.DBUtils;
 import io.noks.perm.listeners.ChatListener;
 import io.noks.perm.listeners.PlayerListener;
@@ -36,7 +37,7 @@ public class Main extends JavaPlugin {
 	}
 	
 	private void registerCommands() {
-		
+		new RankCommand(this);
 	}
 	
 	public DBUtils getDataBase() {

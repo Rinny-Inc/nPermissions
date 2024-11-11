@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 
 import com.avaje.ebean.validation.NotNull;
 import com.google.common.collect.Maps;
@@ -21,11 +22,7 @@ public class PlayerManager {
 	public PlayerManager(UUID playerUUID) {
 		this.playerUUID = playerUUID;
 		this.player = Bukkit.getPlayer(this.playerUUID);
-		this.rank = switch (this.playerUUID.toString()) {
-			case "35b12849-f1a6-4a78-a34e-323796218cf2" -> Ranks.CREATOR;
-			case "860a7c9c-9ea5-471e-b582-0090001938ff" -> Ranks.MANAGER;
-			default -> Ranks.DEFAULT;
-		};
+		this.rank = Ranks.DEFAULT;
 		
 		this.setupPermission();
 		
@@ -74,5 +71,15 @@ public class PlayerManager {
 	
 	public Ranks getRank() {
 		return this.rank;
+	}
+	
+	public void setRank(Ranks rank) {
+		if (!this.player.isOp()) {
+			for (PermissionAttachmentInfo perm : this.player.getEffectivePermissions()) {
+				this.player.removeAttachment(perm.getAttachment());
+			}
+		}
+		this.rank = rank;
+		this.setupPermission();
 	}
 }

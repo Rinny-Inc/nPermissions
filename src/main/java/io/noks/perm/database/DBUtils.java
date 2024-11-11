@@ -64,7 +64,7 @@ public class DBUtils  {
 		try {
 			connection = this.hikari.getConnection();
 			Statement statement = connection.createStatement();
-			statement.executeUpdate("CREATE TABLE IF NOT EXISTS ranks(uuid VARCHAR(36) PRIMARY KEY, rank VARCHAR(12), UNIQUE(`uuid`));");
+			statement.executeUpdate("CREATE TABLE IF NOT EXISTS ranks(uuid VARCHAR(36) PRIMARY KEY, `rank` TEXT, UNIQUE(`uuid`));");
 			statement.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -122,7 +122,22 @@ public class DBUtils  {
 	
 	private Ranks loadPlayerRank(final UUID uuid, final Connection connection) throws SQLException {
 		Ranks rank = Ranks.DEFAULT;
-		try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM rank WHERE uuid=?")){
+		try (PreparedStatement selectStatement = connection.prepareStatement("SELECT COUNT(*) AS count FROM ranks WHERE uuid=?")) {
+	        selectStatement.setString(1, uuid.toString());
+	        try (ResultSet resultSet = selectStatement.executeQuery()) {
+	            if (resultSet.next() && resultSet.getInt("count") == 0) {
+	            	try (PreparedStatement insertStatement = connection.prepareStatement("INSERT INTO ranks VALUES(?, ?)")) {
+	                	insertStatement.setString(1, uuid.toString());
+	                	insertStatement.setString(2, rank.getName());
+	                	insertStatement.executeUpdate();
+	                	insertStatement.close();
+	    	        }
+	            }
+	            resultSet.close();
+	        }
+	        selectStatement.close();
+	    }
+		try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM ranks WHERE uuid=?")){
 			statement.setString(1, uuid.toString());
 			try (ResultSet result = statement.executeQuery()) {
                 if (result.next()) {
@@ -162,7 +177,7 @@ public class DBUtils  {
 	}
 	
 	private void savePlayerRank(final UUID uuid, final Ranks rank, final Connection connection) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("UPDATE ranks SET rank=? WHERE uuid=?")) {
+        try (PreparedStatement statement = connection.prepareStatement("UPDATE ranks SET `rank`=? WHERE uuid=?")) {
         	statement.setString(1, rank.getName().toLowerCase());
             statement.setString(2, uuid.toString());
             statement.executeUpdate();
