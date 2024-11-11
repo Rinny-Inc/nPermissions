@@ -76,6 +76,9 @@ public class PlayerManager {
 	public void setRank(Ranks rank) {
 		if (!this.player.isOp()) {
 			for (PermissionAttachmentInfo perm : this.player.getEffectivePermissions()) {
+				if (perm == null) {
+					continue;
+				}
 				this.player.removeAttachment(perm.getAttachment());
 			}
 		}
