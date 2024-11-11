@@ -43,14 +43,14 @@ public class PlayerManager {
 	}
 	
 	private void setupPermission() {
+		this.player.setDisplayName(this.rank.getColoredPrefix() + this.player.getName());
+		this.player.setPlayerListName(this.rank.getPrefixColors() + this.player.getName(), true);
 		if (this.player.isOp()) {
 			return;
 		}
 		for (String perm : rank.getPermissions()) {
 			this.player.addAttachment(Main.getInstance(), perm, true);
 		}
-		this.player.setDisplayName(this.rank.getColoredPrefix() + this.player.getName());
-		this.player.setPlayerListName(this.rank.getPrefixColors() + this.player.getName(), true);
 	}
 
 	public static PlayerManager get(UUID playerUUID) {
