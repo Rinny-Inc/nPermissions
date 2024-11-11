@@ -132,6 +132,9 @@ public class DBUtils  {
 	                	insertStatement.executeUpdate();
 	                	insertStatement.close();
 	    	        }
+	            	resultSet.close();
+	            	selectStatement.close();
+	            	return rank;
 	            }
 	            resultSet.close();
 	        }
