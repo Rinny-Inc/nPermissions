@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 
 import com.avaje.ebean.validation.NotNull;
@@ -45,9 +46,11 @@ public class PlayerManager {
 		if (this.player.isOp()) {
 			return;
 		}
+		PermissionAttachment pa = this.player.addAttachment(Main.getInstance());
 		for (String perm : rank.getPermissions()) {
-			this.player.addAttachment(Main.getInstance(), perm, true);
+			pa.setPermission(perm, true);
 		}
+		this.player.recalculatePermissions();
 	}
 
 	public static PlayerManager get(UUID playerUUID) {
@@ -76,7 +79,7 @@ public class PlayerManager {
 	public void setRank(Ranks rank) {
 		if (!this.player.isOp()) {
 			for (PermissionAttachmentInfo perm : this.player.getEffectivePermissions()) {
-				if (perm == null) {
+				if (perm.getAttachment() == null) {
 					continue;
 				}
 				this.player.removeAttachment(perm.getAttachment());
