@@ -10,6 +10,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.bukkit.Bukkit;
+
 import com.zaxxer.hikari.HikariDataSource;
 
 import io.noks.perm.enums.Ranks;
@@ -64,7 +66,7 @@ public class DBUtils  {
 		try {
 			connection = this.hikari.getConnection();
 			Statement statement = connection.createStatement();
-			statement.executeUpdate("CREATE TABLE IF NOT EXISTS ranks(uuid VARCHAR(36) PRIMARY KEY, `rank` TEXT, UNIQUE(`uuid`));");
+			statement.executeUpdate("CREATE TABLE IF NOT EXISTS ranks(uuid VARCHAR(36) PRIMARY KEY, nickname VARCHAR(16), `rank` TEXT, UNIQUE(`uuid`));");
 			statement.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -126,9 +128,10 @@ public class DBUtils  {
 	        selectStatement.setString(1, uuid.toString());
 	        try (ResultSet resultSet = selectStatement.executeQuery()) {
 	            if (resultSet.next() && resultSet.getInt("count") == 0) {
-	            	try (PreparedStatement insertStatement = connection.prepareStatement("INSERT INTO ranks VALUES(?, ?)")) {
+	            	try (PreparedStatement insertStatement = connection.prepareStatement("INSERT INTO ranks VALUES(?, ?, ?)")) {
 	                	insertStatement.setString(1, uuid.toString());
-	                	insertStatement.setString(2, rank.getName());
+	                	insertStatement.setString(2, Bukkit.getPlayer(uuid).getName());
+	                	insertStatement.setString(3, rank.getName());
 	                	insertStatement.executeUpdate();
 	                	insertStatement.close();
 	    	        }
@@ -162,8 +165,7 @@ public class DBUtils  {
 			Connection connection = null;
 			try {
 				connection = this.hikari.getConnection();
-				final UUID uuid = pm.getPlayerUUID();
-				this.savePlayerRank(uuid, pm.getRank(), connection);
+				this.savePlayerRank(pm, connection);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			} finally {
@@ -179,10 +181,68 @@ public class DBUtils  {
 		}, executorService);
 	}
 	
-	private void savePlayerRank(final UUID uuid, final Ranks rank, final Connection connection) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("UPDATE ranks SET `rank`=? WHERE uuid=?")) {
-        	statement.setString(1, rank.getName().toLowerCase());
-            statement.setString(2, uuid.toString());
+	public CompletableFuture<Boolean> isPlayerExist(String name) {
+		return CompletableFuture.supplyAsync(() -> {
+			boolean exists = false;
+			Connection connection = null;
+			try {
+				connection = this.hikari.getConnection();
+				try (PreparedStatement selectStatement = connection.prepareStatement("SELECT COUNT(*) AS count FROM ranks WHERE nickname=?")) {
+			        selectStatement.setString(1, name);
+			        try (ResultSet resultSet = selectStatement.executeQuery()) {
+			            if (resultSet.next() && resultSet.getInt("count") > 0) {
+			            	exists = true;
+			            }
+			            resultSet.close();
+			        }
+			        selectStatement.close();
+				} catch (SQLException e) {}
+			} catch (Exception e) {
+				// TODO: handle exception
+			} finally {
+				if (connection != null) {
+					try {
+						connection.close();
+					} catch (SQLException ex) {
+						ex.printStackTrace();
+					}
+				}
+			}
+			return exists;
+		}, executorService);
+	}
+	
+	public void updateRankForOfflinePlayer(String name, Ranks rank) {
+		CompletableFuture.runAsync(() -> {
+			Connection connection = null;
+			try {
+				connection = this.hikari.getConnection();
+				try (PreparedStatement statement = this.hikari.getConnection().prepareStatement("UPDATE ranks SET `rank`=? WHERE nickname=?")) {
+		        	statement.setString(1, rank.getName().toLowerCase());
+		            statement.setString(2, name);
+		            statement.executeUpdate();
+		            statement.close();
+		        } catch (SQLException e) {
+				}
+			} catch (Exception e) {
+				
+			} finally {
+				if (connection != null) {
+					try {
+						connection.close();
+					} catch (SQLException ex) {
+						ex.printStackTrace();
+					}
+				}
+			}
+		}, executorService);
+	}
+	
+	private void savePlayerRank(final PlayerManager pm, final Connection connection) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("UPDATE ranks SET `rank`=?, nickname=? WHERE uuid=?")) {
+        	statement.setString(1, pm.getRank().getName().toLowerCase());
+        	statement.setString(2, pm.getPlayer().getName());
+            statement.setString(3, pm.getPlayerUUID().toString());
             statement.executeUpdate();
             statement.close();
         }

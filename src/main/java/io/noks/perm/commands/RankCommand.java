@@ -29,11 +29,8 @@ public class RankCommand implements CommandExecutor {
 			sender.sendMessage(ChatColor.RED + "Usage: /rank <player> <rank name>");
 			return false;
 		}
-		boolean console = false;
+		boolean console = sender instanceof ConsoleCommandSender;
 		
-		if (sender instanceof ConsoleCommandSender) {
-			console = true;
-		}
 		if (args.length == 1) {
 			if (args[0].equalsIgnoreCase("list")) {
 				for (Ranks rank : Ranks.values()) {
@@ -45,12 +42,19 @@ public class RankCommand implements CommandExecutor {
 			return false;
 		}
 		final Player target = this.main.getServer().getPlayer(args[0]);
-		
-		if (target == null) { // TODO: make offlineplayer usable
-			sender.sendMessage(ChatColor.RED + "Player's not connected! (Coming soon)");
-			return false;
-		}
 		final Ranks rank = Ranks.getRankFromName(args[1]);
+		
+		if (target == null) {
+			this.main.getDataBase().isPlayerExist(args[0]).thenAccept(exists -> {
+		        if (!exists) {
+		            sender.sendMessage(ChatColor.RED + "Invalid Player!");
+		            return;
+		        }
+		        this.main.getDataBase().updateRankForOfflinePlayer(args[0], rank);
+	            sender.sendMessage(ChatColor.GREEN + "Rank " + rank.getName() + " set to " + args[0]);
+		    });
+		    return true;
+		}
 		
 		if (rank == null) {
 			sender.sendMessage(ChatColor.RED + "Invalid rank; do (/rank list) to know all the ranks names!");
@@ -70,7 +74,7 @@ public class RankCommand implements CommandExecutor {
 		}
 		final PlayerManager manager = PlayerManager.get(target.getUniqueId());
 		manager.setRank(rank);
-		
+			
 		if (sender.getName() != target.getName()) {
 			sender.sendMessage(ChatColor.GREEN + "Rank " + rank.getName() + " set to " + target.getName());
 		}
