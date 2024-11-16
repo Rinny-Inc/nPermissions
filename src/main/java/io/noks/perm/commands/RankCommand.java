@@ -41,8 +41,14 @@ public class RankCommand implements CommandExecutor {
 			sender.sendMessage(ChatColor.RED + "Usage: /rank <player> <rank name>");
 			return false;
 		}
-		final Player target = this.main.getServer().getPlayer(args[0]);
 		final Ranks rank = Ranks.getRankFromName(args[1]);
+		
+		if (rank == null) {
+			sender.sendMessage(ChatColor.RED + "Invalid rank; do (/rank list) to know all the ranks names!");
+			return false;
+		}
+		
+		final Player target = this.main.getServer().getPlayer(args[0]);
 		
 		if (target == null) {
 			this.main.getDataBase().isPlayerExist(args[0]).thenAccept(exists -> {
@@ -56,10 +62,6 @@ public class RankCommand implements CommandExecutor {
 		    return true;
 		}
 		
-		if (rank == null) {
-			sender.sendMessage(ChatColor.RED + "Invalid rank; do (/rank list) to know all the ranks names!");
-			return false;
-		}
 		if (!console) {
 			Player player = (Player) sender;
 			PlayerManager pm = PlayerManager.get(player.getUniqueId());
